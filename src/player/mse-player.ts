@@ -133,6 +133,14 @@ class MSEPlayer {
         this._player_engine.seek(seconds);
     }
 
+    public switchPrimaryAudio(): void {
+        this._player_engine.switchPrimaryAudio();
+    }
+
+    public switchSecondaryAudio(): void {
+        this._player_engine.switchSecondaryAudio();
+    }
+
     public get mediaInfo(): MediaInfo {
         return this._player_engine.mediaInfo;
     }

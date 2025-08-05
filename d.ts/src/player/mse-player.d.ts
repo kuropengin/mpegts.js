@@ -23,6 +23,8 @@ declare class MSEPlayer {
     set muted(muted: boolean);
     get currentTime(): number;
     set currentTime(seconds: number);
+    switchPrimaryAudio(): void;
+    switchSecondaryAudio(): void;
     get mediaInfo(): MediaInfo;
     get statisticsInfo(): any;
 }

@@ -321,6 +321,8 @@ declare namespace Mpegts {
         unload(): void;
         play(): Promise<void> | void;
         pause(): void;
+        switchPrimaryAudio?(): void;
+        switchSecondaryAudio?(): void;
         type: string;
         buffered: TimeRanges;
         duration: number;
@@ -387,6 +389,8 @@ declare namespace Mpegts {
     interface MSEPlayer extends Player {
         mediaInfo: MSEPlayerMediaInfo;
         statisticsInfo: MSEPlayerStatisticsInfo;
+        switchPrimaryAudio(): void;
+        switchSecondaryAudio(): void;
     }
 
     interface NativePlayer extends Player {

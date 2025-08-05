@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>mpegts.js 音声切り替えテスト</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        video {
+            width: 800px;
+            height: 450px;
+            margin: 20px 0;
+        }
+        .controls {
+            margin: 10px 0;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>mpegts.js 音声切り替えテスト</h1>
+    
+    <div class="info">
+        <h3>使用方法:</h3>
+        <ol>
+            <li>マルチ音声対応のTSストリーミングURLを入力してください</li>
+            <li>「読み込み」ボタンでストリームを開始します</li>
+            <li>「主音声」「副音声」ボタンで音声を切り替えます</li>
+        </ol>
+    </div>
+
+    <div class="controls">
+        <label for="url">TSストリームURL:</label><br>
+        <input type="text" id="url" style="width: 600px; margin: 5px 0;" 
+               placeholder="https://example.com/stream.ts または .m3u8">
+        <button class="button" onclick="loadStream()">読み込み</button>
+        <button class="button" onclick="unloadStream()">停止</button>
+    </div>
+
+    <video id="videoElement" controls></video>
+
+    <div class="controls">
+        <h3>音声切り替え:</h3>
+        <button class="button" id="primaryAudioBtn" onclick="switchToPrimaryAudio()" disabled>主音声</button>
+        <button class="button" id="secondaryAudioBtn" onclick="switchToSecondaryAudio()" disabled>副音声</button>
+    </div>
+
+    <div class="info" id="status">
+        ステータス: 待機中
+    </div>
+
+    <script src="../dist/mpegts.js"></script>
+    <script>
+        let player = null;
+        
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML = 'ステータス: ' + message;
+        }
+        
+        function enableAudioSwitchButtons(enable) {
+            const primaryBtn = document.getElementById('primaryAudioBtn');
+            const secondaryBtn = document.getElementById('secondaryAudioBtn');
+            primaryBtn.disabled = !enable;
+            secondaryBtn.disabled = !enable;
+        }
+        
+        function loadStream() {
+            const url = document.getElementById('url').value.trim();
+            if (!url) {
+                alert('URLを入力してください');
+                return;
+            }
+            
+            if (player) {
+                player.destroy();
+                player = null;
+            }
+            
+            updateStatus('読み込み中...');
+            
+            const videoElement = document.getElementById('videoElement');
+            
+            if (mpegts.isSupported()) {
+                const mediaDataSource = {
+                    type: 'mpegts',
+                    isLive: true,
+                    url: url
+                };
+                
+                const config = {
+                    enableWorker: false,
+                    lazyLoadMaxDuration: 3 * 60,
+                    liveBufferLatencyChasing: true
+                };
+                
+                player = mpegts.createPlayer(mediaDataSource, config);
+                player.attachMediaElement(videoElement);
+                
+                player.on(mpegts.Events.ERROR, function(type, details, info) {
+                    console.error('Player error:', type, details, info);
+                    updateStatus('エラー: ' + details);
+                    enableAudioSwitchButtons(false);
+                });
+                
+                player.on(mpegts.Events.MEDIA_INFO, function(mediaInfo) {
+                    console.log('Media info:', mediaInfo);
+                    updateStatus('メディア情報を取得しました');
+                    // 音声切り替えボタンを有効化
+                    enableAudioSwitchButtons(true);
+                });
+                
+                player.on(mpegts.Events.LOADING_COMPLETE, function() {
+                    updateStatus('読み込み完了');
+                });
+                
+                try {
+                    player.load();
+                    updateStatus('プレイヤーを初期化しました');
+                } catch (e) {
+                    console.error('Load error:', e);
+                    updateStatus('読み込みエラー: ' + e.message);
+                }
+            } else {
+                updateStatus('MSE H.264 がサポートされていません');
+            }
+        }
+        
+        function unloadStream() {
+            if (player) {
+                player.destroy();
+                player = null;
+                updateStatus('停止しました');
+                enableAudioSwitchButtons(false);
+            }
+        }
+        
+        function switchToPrimaryAudio() {
+            if (player && player.switchPrimaryAudio) {
+                player.switchPrimaryAudio();
+                updateStatus('主音声に切り替えました');
+                console.log('Switched to primary audio');
+            } else {
+                updateStatus('主音声切り替えに失敗しました');
+                console.error('switchPrimaryAudio method not available');
+            }
+        }
+        
+        function switchToSecondaryAudio() {
+            if (player && player.switchSecondaryAudio) {
+                player.switchSecondaryAudio();
+                updateStatus('副音声に切り替えました');
+                console.log('Switched to secondary audio');
+            } else {
+                updateStatus('副音声切り替えに失敗しました');
+                console.error('switchSecondaryAudio method not available');
+            }
+        }
+        
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('準備完了 - URLを入力してストリームを開始してください');
+        });
+    </script>
+</body>
+</html>

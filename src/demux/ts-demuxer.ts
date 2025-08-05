@@ -158,6 +158,8 @@ class TSDemuxer extends BaseDemuxer {
     private video_track_ = {type: 'video', id: 1, sequenceNumber: 0, samples: [], length: 0};
     private audio_track_ = {type: 'audio', id: 2, sequenceNumber: 0, samples: [], length: 0};
 
+    public preferred_secondary_audio = false;
+
     public constructor(probe_data: any, config: any) {
         super();
 
